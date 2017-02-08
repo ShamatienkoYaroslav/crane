@@ -1,0 +1,17 @@
+.venv/
+bin/
+dist/
+build/
+/include
+wheelhouse/
+*.egg-info/
+*.py[co]
+__pycache__/
+.tox
+*.deb
+doc/_build/
+.Python
+pip-selfcheck.json
+TODO
+python3.6
+Crane.egg-info
