@@ -1,6 +1,8 @@
-import os, stat
+import os, stat, codecs
 import docker
 from lib.utils import Log
+from lib.ftp import BinaryFTP
+from lib.env import env
 
 VOLUMES_IO_MODE                 = 'rw'
 PATH_DOCKER_SOCKET              = 'unix://var/run/docker.sock'
@@ -55,7 +57,7 @@ class Crane:
             Log.err('Can\'t find image %s' % (self.image))
         except docker.errors.APIError as ex:
             Log.err(ex, 'Some docker server error occurred while trying to run container with image %s' % (self.image))
-        except AttributeError as ex:
+        except (AttributeError) as ex:
             Log.err(ex)
         return container_id
 
@@ -65,12 +67,32 @@ class Crane:
     def image_pull(self):
         image_id = None;
         try:
-            image = self.images.pull(self.image)
+            path = env('CRANE_PULL_IMAGE_LOCAL_PATH')
+            if path: # pull image from local network
+                read_file = codecs.open(path, "rb", encoding='latin-1', errors='ignore')
+                binary = read_file.read()
+                self.images.load(binary)
+                image = self.images.get(self.image)
+            elif env('CRANE_FTP_USE', False): # pull image from ftp
+                host     = env('CRANE_FTP_HOST')
+                user     = env('CRANE_FTP_USER')
+                passwd   = env('CRANE_FTP_PSWR')
+                cwd      = env('CRANE_FTP_CWD')
+                filename = env('CRANE_FTP_FN')
+
+                binary_ftp = BinaryFTP(host, user, passwd, cwd, filename)
+                binary = binary_ftp.getBuffer()
+                binary_ftp.close()
+
+                self.images.load(binary)
+                image = self.images.get(self.image)
+            else: # pull image from docker hub
+                image = self.images.pull(self.image)
             image_id = image.short_id
             Log.info('Pulled image %s' % (image_id))
         except docker.errors.APIError:
             Log.err('Some docker server error occurred while trying to pull image %s' % (self.image))
-        except AttributeError as ex:
+        except (AttributeError, FileNotFoundError, BinaryFTP.FTPError) as ex:
             Log.err(ex)
         return image_id
 
@@ -78,7 +100,7 @@ class Crane:
     ### OTHER
     @classmethod
     def docker_server_is_running(cls):
-        path = os.environ.get('DOCKER_SOCKET')
+        path = env('DOCKER_SOCKET')
         if path is None:
             path = '/var/run/docker.sock'
 
@@ -90,7 +112,7 @@ class Crane:
 
     @classmethod
     def generate_ports_dict(cls):
-        ports = os.environ.get('CRANE_CONTAINER_PORTS');
+        ports = env('CRANE_CONTAINER_PORTS');
         if ports is not None:
             ports           = ports.split(':')
             host_ports      = ports[0].split('-')
@@ -124,7 +146,7 @@ class Crane:
 
     @classmethod
     def generate_restart_policy(cls):
-        restart_policy = os.environ.get('CRANE_CONTAINER_RESTART_POLICY');
+        restart_policy = env('CRANE_CONTAINER_RESTART_POLICY');
         if restart_policy is not None:
             if restart_policy == 'always':
                 return {'Name': 'always'}
@@ -136,7 +158,7 @@ class Crane:
 
     @classmethod
     def is_privileged(cls):
-        privileged = os.environ.get('CRANE_CONTAINER_PRIVILEGED');
+        privileged = env('CRANE_CONTAINER_PRIVILEGED');
         if privileged is not None:
             if privileged == 'True' or privileged == 'true':
                 return True
@@ -146,7 +168,7 @@ class Crane:
 
     @classmethod
     def generate_volumes(cls):
-        volumes = os.environ.get('CRANE_CONTAINER_VOLUMES');
+        volumes = env('CRANE_CONTAINER_VOLUMES');
         if volumes is not None:
             volumes_array = volumes.split(',')
             volumes = {}
@@ -165,14 +187,16 @@ class Crane:
 
     ### ERRORS
 
-    class SocketError(BaseException):
-        def __init__(self):
-            self.message = 'No socket was specified';
+    class MainError(BaseException):
+        def __init__(self, message):
+            self.message = message
         def __str__(self):
             return self.message
 
-    class ContainersParamError(BaseException):
+    class SocketError(MainError):
+        def __init__(self):
+            super().__init__('No socket was specified')
+
+    class ContainersParamError(MainError):
         def __init__(self, param):
-            self.message = 'Parameter \"%s\" set incorrectly' % (param);
-        def __str__(self):
-            return self.message
+            super().__init__('Parameter \"%s\" set incorrectly' % (param))

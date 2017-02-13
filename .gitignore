@@ -1,6 +1,7 @@
 .venv/
 bin/
 dist/
+distr/
 build/
 /include
 wheelhouse/
@@ -15,3 +16,5 @@ pip-selfcheck.json
 TODO
 python3.6
 Crane.egg-info
+test
+test.py

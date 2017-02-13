@@ -25,5 +25,5 @@ setup(
     description="App for manage docker container",
     long_description=open('README.md').read(),
     license="GPLv2+",
-    url=""
+    url="https://github.com/ShamatienkoYaroslav/crane"
 )

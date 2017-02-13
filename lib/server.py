@@ -36,4 +36,4 @@ class Server:
         self.crane = crane
 
     def run(self):
-        self.app.run()
+        self.app.run(host='0.0.0.0')
