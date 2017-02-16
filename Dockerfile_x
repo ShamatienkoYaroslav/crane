@@ -16,7 +16,7 @@ RUN pip3 install --upgrade pip
 RUN curl -fsSL https://yum.dockerproject.org/gpg | apt-key add -
 RUN add-apt-repository "deb https://apt.dockerproject.org/repo/ ubuntu-$(lsb_release -cs) main"
 RUN apt-get update
-RUN apt-get -y install docker-engine=1.13.0-0~ubuntu-xenial
+RUN apt-get -y install docker-engine=1.13.0-0~ubuntu-$(lsb_release -cs)
 RUN cd $WORKING_DIR
 RUN chmod 755 run.sh
 RUN pip3 install virtualenv
