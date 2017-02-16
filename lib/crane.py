@@ -33,17 +33,35 @@ class Crane:
 
     ### CONTAINER
 
-    def container_remove(self):
+    def get_info(self):
+        info = {'id': None, 'short_id': None, 'name': None, 'status': None, 'attrs': None}
         try:
             container = self.containers.get(self.container)
+            info['id'] = container.id
+            info['short_id'] = container.short_id
+            info['name'] = container.name
+            info['status'] = container.status
+            info['attrs'] = container.attrs
+        except docker.errors.NotFound:
+            Log.info('Can\'t find running container')
+        except docker.errors.APIError:
+            Log.err('Can\'t remove container')
+        return info;
+
+    def container_remove(self):
+        container_id = None
+        try:
+            container = self.containers.get(self.container)
+            containerId = container.short_id
             container.remove(force=True)
-            Log.info('Container %s was removed' % (container.short_id))
+            Log.info('Container %s was removed' % (containerId))
         except docker.errors.NotFound:
             Log.info('Can\'t find running container')
         except docker.errors.APIError:
             Log.err('Can\'t remove container')
         except AttributeError as ex:
             Log.err(ex)
+        return containerId
 
     def container_run(self):
         container_id = None
@@ -90,7 +108,8 @@ class Crane:
                 image = self.images.pull(self.image)
             image_id = image.short_id
             Log.info('Pulled image %s' % (image_id))
-        except docker.errors.APIError:
+        except docker.errors.APIError as ex:
+            Log.err(ex)
             Log.err('Some docker server error occurred while trying to pull image %s' % (self.image))
         except (AttributeError, FileNotFoundError, BinaryFTP.FTPError) as ex:
             Log.err(ex)
@@ -112,7 +131,7 @@ class Crane:
 
     @classmethod
     def generate_ports_dict(cls):
-        ports = env('CRANE_CONTAINER_PORTS');
+        ports = env('CRANE_CONTAINER_PORTS')
         if ports is not None:
             ports           = ports.split(':')
             host_ports      = ports[0].split('-')
@@ -146,7 +165,7 @@ class Crane:
 
     @classmethod
     def generate_restart_policy(cls):
-        restart_policy = env('CRANE_CONTAINER_RESTART_POLICY');
+        restart_policy = env('CRANE_CONTAINER_RESTART_POLICY', 'always');
         if restart_policy is not None:
             if restart_policy == 'always':
                 return {'Name': 'always'}
@@ -158,7 +177,7 @@ class Crane:
 
     @classmethod
     def is_privileged(cls):
-        privileged = env('CRANE_CONTAINER_PRIVILEGED');
+        privileged = env('CRANE_CONTAINER_PRIVILEGED', 'true');
         if privileged is not None:
             if privileged == 'True' or privileged == 'true':
                 return True
