@@ -7,7 +7,6 @@ from lib.env import env
 class Server:
     def __init__(self, crane):
         app = Flask(__name__)
-        app.config['JSON_SORT_KEYS'] = False
 
         @app.route("/")
         def index():
