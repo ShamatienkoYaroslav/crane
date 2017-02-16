@@ -29,4 +29,4 @@ RUN sed -i -e 's/\r$//' run.sh
 
 EXPOSE 5000
 
-CMD ./run.sh
+CMD sudo ./run.sh

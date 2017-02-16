@@ -52,16 +52,16 @@ class Crane:
         container_id = None
         try:
             container = self.containers.get(self.container)
-            containerId = container.short_id
+            container_id = container.short_id
             container.remove(force=True)
-            Log.info('Container %s was removed' % (containerId))
+            Log.info('Container %s was removed' % (container_id))
         except docker.errors.NotFound:
             Log.info('Can\'t find running container')
         except docker.errors.APIError:
             Log.err('Can\'t remove container')
         except AttributeError as ex:
             Log.err(ex)
-        return containerId
+        return container_id
 
     def container_run(self):
         container_id = None
