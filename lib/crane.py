@@ -15,7 +15,7 @@ class Crane:
 
         self.container  = container
         self.image      = image
-
+        
         # container params
         self.ports          = Crane.generate_ports_dict()
         self.restart_policy = Crane.generate_restart_policy()
@@ -34,14 +34,18 @@ class Crane:
     ### CONTAINER
 
     def get_info(self):
-        info = {'id': None, 'short_id': None, 'name': None, 'status': None, 'attrs': None}
+        info = {'id': None, 'short_id': None, 'name': None, 'status': None, 'attrs': None, 'image_id': None, 'image_short_id': None, 'image_attrs': None}
         try:
             container = self.containers.get(self.container)
+            image = self.images.get(self.image)
             info['id'] = container.id
             info['short_id'] = container.short_id
             info['name'] = container.name
             info['status'] = container.status
             info['attrs'] = container.attrs
+            info['image_id'] = image.id
+            info['image_short_id'] = image.short_id
+            info['image_attrs'] = image.attrs
         except docker.errors.NotFound:
             Log.info('Can\'t find running container')
         except docker.errors.APIError:
@@ -61,6 +65,28 @@ class Crane:
             Log.err('Can\'t remove container')
         except AttributeError as ex:
             Log.err(ex)
+        return container_id
+
+    def container_start(self):
+        container_id = None
+        try:
+            container = self.containers.get(self.container)
+            container_id = container.short_id
+            container.start()
+            Log.info('Container %s started' % (container_id))
+        except docker.errors.APIError as ex:
+            Log.err(ex, 'Some docker server error occurred while trying to start container with image %s' % (self.image))
+        return container_id
+
+    def container_stop(self):
+        container_id = None
+        try:
+            container = self.containers.get(self.container)
+            container_id = container.short_id
+            container.stop()
+            Log.info('Container %s stoped' % (container_id))
+        except docker.errors.APIError as ex:
+            Log.err(ex, 'Some docker server error occurred while trying to stop container with image %s' % (self.image))
         return container_id
 
     def container_run(self):

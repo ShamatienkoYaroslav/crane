@@ -17,12 +17,23 @@ RUN curl -fsSL https://yum.dockerproject.org/gpg | apt-key add -
 RUN add-apt-repository "deb https://apt.dockerproject.org/repo/ ubuntu-$(lsb_release -cs) main"
 RUN apt-get update
 RUN apt-get -y install docker-engine=1.13.0-0~ubuntu-$(lsb_release -cs)
+RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
+RUN apt-get install -y nodejs
 RUN cd $WORKING_DIR
 RUN chmod 755 run.sh
+
+# SDK Server
+RUN cd sdk
 RUN pip3 install virtualenv
 RUN virtualenv .
 RUN source ./bin/activate
 RUN pip3 install -r requirements.txt
+RUN cd ..
+
+# UI Server
+RUN cd ui
+RUN npm i --production
+RUN cd ..
 
 # Windows add specific CR LF to the end of line
 RUN sed -i -e 's/\r$//' run.sh

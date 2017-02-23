@@ -18,3 +18,6 @@ python3.6
 Crane.egg-info
 test
 test.py
+.DS_Store
+temp/
+.Python

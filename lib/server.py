@@ -3,13 +3,16 @@ from flask import Flask, jsonify, request
 from lib.crane import Crane
 from lib.utils import Log
 from lib.env import env
+from flask_cors import CORS, cross_origin
 
 class Server:
     def __init__(self, crane):
         app = Flask(__name__)
+        CORS(app)
 
         @app.route("/")
         def index():
+            Log.info(request)
             image = env('CRANE_IMAGE')
             containerName = env('CRANE_NAME')
             ports = env('CRANE_CONTAINER_PORTS')
@@ -22,9 +25,8 @@ class Server:
             ftpUser = env('CRANE_FTP_USER')
             ftpCwd = env('CRANE_FTP_CWD')
             ftpFilename = env('CRANE_FTP_FN')
+            info = self.crane.get_info()
             return jsonify(
-                name='Crane',
-                version='0.2',
                 image=image,
                 containerName=containerName,
                 ports=ports,
@@ -36,8 +38,20 @@ class Server:
                 ftpHost=ftpHost,
                 ftpUser=ftpHost,
                 ftpCwd=ftpCwd,
-                ftpFilename=ftpFilename
+                ftpFilename=ftpFilename,
+                id=info['id'],
+                shortId=info['short_id'],
+                status=info['status'],
+                attrs=info['attrs'],
+                imageId=info['image_id'],
+                imageShortId=info['image_short_id'],
+                imageAttrs=info['image_attrs']
             )
+
+        @app.route("/about")
+        def about():
+            Log.info(request)
+            return jsonify(name='Crane', version='0.3')
 
         @app.route("/update")
         def update():
@@ -46,6 +60,18 @@ class Server:
             self.crane.container_remove()
             container_id = self.crane.container_run()
             return jsonify(imageId=image_id, containerId=container_id)
+
+        @app.route("/start")
+        def start():
+            Log.info(request)
+            container_id = self.crane.container_start();
+            return jsonify(containerId=container_id)
+
+        @app.route("/stop")
+        def stop():
+            Log.info(request)
+            container_id = self.crane.container_stop();
+            return jsonify(containerId=container_id)
 
         @app.route("/restart")
         def restart():
@@ -65,18 +91,6 @@ class Server:
             Log.info(request)
             image_id = self.crane.image_pull();
             return jsonify(imageId=image_id)
-
-        @app.route("/status")
-        def status():
-            Log.info(request)
-            info = self.crane.get_info()
-            return jsonify(
-                id=info['id'],
-                short_id=info['short_id'],
-                name=info['name'],
-                status=info['status'],
-                attr=info['attrs']
-            )
 
         self.app = app
         self.crane = crane

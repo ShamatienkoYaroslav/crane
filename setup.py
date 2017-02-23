@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="Crane",
-    version="0.2",
+    version="0.3",
     packages=find_packages(),
     install_requires=[
         'appdirs==1.4.0',
@@ -18,7 +18,8 @@ setup(
         'requests==2.13.0',
         'six==1.10.0',
         'websocket-client==0.40.0',
-        'Werkzeug==0.11.15'
+        'Werkzeug==0.11.15'б
+        'flask-cors'
 ],
     author="ShamatienkoYaroslav",
     author_email="shamatienko.yaroslav@gmail.com",
