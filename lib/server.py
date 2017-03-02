@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, current_app, redirect
 from lib.crane import Crane
 from lib.utils import Log
 from lib.env import env
@@ -7,11 +7,16 @@ from flask_cors import CORS, cross_origin
 
 class Server:
     def __init__(self, crane):
-        app = Flask(__name__)
+        app = Flask(__name__, static_folder = "../ui", static_url_path="")
         CORS(app)
 
         @app.route("/")
         def index():
+            Log.info(request)
+            return current_app.send_static_file('index.html')
+
+        @app.route("/status")
+        def status():
             Log.info(request)
             image = env('CRANE_IMAGE')
             containerName = env('CRANE_NAME')
@@ -91,6 +96,10 @@ class Server:
             Log.info(request)
             image_id = self.crane.image_pull();
             return jsonify(imageId=image_id)
+
+        @app.errorhandler(404)
+        def page_not_found(e):
+            return redirect('/')
 
         self.app = app
         self.crane = crane

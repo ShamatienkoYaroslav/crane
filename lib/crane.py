@@ -15,7 +15,7 @@ class Crane:
 
         self.container  = container
         self.image      = image
-        
+
         # container params
         self.ports          = Crane.generate_ports_dict()
         self.restart_policy = Crane.generate_restart_policy()
@@ -37,19 +37,26 @@ class Crane:
         info = {'id': None, 'short_id': None, 'name': None, 'status': None, 'attrs': None, 'image_id': None, 'image_short_id': None, 'image_attrs': None}
         try:
             container = self.containers.get(self.container)
-            image = self.images.get(self.image)
             info['id'] = container.id
             info['short_id'] = container.short_id
             info['name'] = container.name
             info['status'] = container.status
             info['attrs'] = container.attrs
+        except docker.errors.NotFound:
+            Log.info('Can\'t find running container')
+        except docker.errors.APIError:
+            Log.err(ex, 'Some docker server error occurred while trying to find info about the container %s' % (self.container))
+
+        try:
+            image = self.images.get(self.image)
             info['image_id'] = image.id
             info['image_short_id'] = image.short_id
             info['image_attrs'] = image.attrs
         except docker.errors.NotFound:
-            Log.info('Can\'t find running container')
+            Log.info('Can\'t find image')
         except docker.errors.APIError:
-            Log.err('Can\'t remove container')
+            Log.err(ex, 'Some docker server error occurred while trying to find info about the image %s' % (self.image))
+
         return info;
 
     def container_remove(self):
@@ -76,6 +83,7 @@ class Crane:
             Log.info('Container %s started' % (container_id))
         except docker.errors.APIError as ex:
             Log.err(ex, 'Some docker server error occurred while trying to start container with image %s' % (self.image))
+            return self.container_run()
         return container_id
 
     def container_stop(self):

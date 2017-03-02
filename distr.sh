@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo 'Build server...'
 rm -rf ./distr
 mkdir ./distr
 mkdir ./distr/lib
@@ -13,11 +14,15 @@ cp ./requirements.txt ./distr/requirements.txt
 cp ./setup.py ./distr/setup.py
 cp ./run.sh ./distr/run.sh
 
-# mkdir temp && cd temp
-# git clone crane-client
-# cd crane-client
-# npm i
-# npm run build
-# cp dist ../../distr/ui
-# cd ../..
-# rm -rf temp
+echo 'Build client...'
+rm -rf temp
+mkdir temp && cd temp
+git clone https://github.com/ShamatienkoYaroslav/crane-client.git
+cd crane-client
+npm i
+npm run build
+cp -r dist ../../distr/ui
+cd ../..
+rm -rf temp
+
+echo 'Done'

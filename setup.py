@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="Crane",
-    version="0.3",
+    version="0.4",
     packages=find_packages(),
     install_requires=[
         'appdirs==1.4.0',
