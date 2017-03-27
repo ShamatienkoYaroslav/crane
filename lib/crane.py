@@ -21,6 +21,7 @@ class Crane:
         self.restart_policy = Crane.generate_restart_policy()
         self.volumes        = Crane.generate_volumes()
         self.privileged     = Crane.is_privileged()
+        self.log_config     = Crane.generate_logger()
 
         # Docker remote API
         if Crane.docker_server_is_running():
@@ -100,7 +101,7 @@ class Crane:
     def container_run(self):
         container_id = None
         try:
-            container = self.containers.run(self.image, detach=True, name=self.container, ports=self.ports, restart_policy=self.restart_policy, privileged=self.privileged, volumes=self.volumes)
+            container = self.containers.run(self.image, detach=True, name=self.container, ports=self.ports, restart_policy=self.restart_policy, privileged=self.privileged, volumes=self.volumes, log_config=self.log_config)
             container_id = container.short_id
             Log.info('Container %s started' % (container_id))
         except docker.errors.ContainerError:
@@ -152,10 +153,24 @@ class Crane:
 
     ### OTHER
     @classmethod
+    def generate_logger(cls):
+        logger_types = docker.types.containers.LogConfigTypesEnum
+        logger = env('CRANE_CONTAINER_LOGGER', logger_types.NONE)
+        if logger is 'json':
+            logger = logger_types.JSON
+        elif logger is 'syslog':
+            logger =logger_types.SYSLOG
+        elif logger is 'journald':
+            logger = logger_types.JOURNALD
+        elif logger is 'gelf':
+            logger = logger_types.GELF
+        elif logger is 'fluentd':
+            logger = logger_types.FLUENTD
+        return {'type': logger}
+
+    @classmethod
     def docker_server_is_running(cls):
-        path = env('DOCKER_SOCKET')
-        if path is None:
-            path = '/var/run/docker.sock'
+        path = env('DOCKER_SOCKET', '/var/run/docker.sock')
 
         mode = os.stat(path).st_mode
         if not stat.S_ISSOCK(mode):

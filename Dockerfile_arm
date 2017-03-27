@@ -19,9 +19,10 @@ RUN apt-get update
 RUN apt-get -y install docker-engine=1.13.0-0~ubuntu-$(lsb_release -cs)
 RUN cd $WORKING_DIR
 RUN chmod 755 run.sh
-RUN pip3 install virtualenv
-RUN virtualenv .
-RUN source ./bin/activate
+
+#RUN pip3 install virtualenv
+#RUN virtualenv .
+#RUN source ./bin/activate
 RUN pip3 install -r requirements.txt
 
 # Windows add specific CR LF to the end of line
